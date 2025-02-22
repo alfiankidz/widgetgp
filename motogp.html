@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.40/moment-timezone-with-data.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/id.min.js"></script>
+</head>
+
+<body>
+  <article class="panel is-danger mx-1 mt-1 mb-0" style="border: 1px solid #FF6685; --bulma-panel-shadow: none;">
+    <div id="panel_title" class="panel-heading is-flex is-justify-content-space-between">
+      <span>Jadwal MotoGP</span>
+      <div>
+        <div class="select is-small">
+          <select id="classSelect">
+            <option value="motogp">MotoGP</option>
+            <option value="moto2">Moto2</option>
+            <option value="moto3">Moto3</option>
+          </select>
+        </div>
+        <div class="select is-small">
+          <select id="timezoneSelect">
+            <option value="Asia/Jakarta">WIB</option>
+            <option value="Asia/Makassar">WITA</option>
+            <option value="Asia/Jayapura">WIT</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <p class="panel-tabs">
+      <a class="is-active" data-panel="panel_hari_ini">Hari Ini</a>
+      <a data-panel="panel_semua_jadwal">Semua</a>
+    </p>
+    <div id="panel_hari_ini" class="panel-content"></div>
+    <div id="panel_semua_jadwal" class="panel-content is-hidden"></div>
+  </article>
+
+
+  <script async>
+    moment.locale('id');
+    const apiUrls = {
+      motogp: "https://raw.githubusercontent.com/jscti/json_nextgp/main/motogp.json",
+      moto2: "https://raw.githubusercontent.com/jscti/json_nextgp/main/moto2.json",
+      moto3: "https://raw.githubusercontent.com/jscti/json_nextgp/main/moto3.json"
+    };
+    const classTitles = {
+      motogp: "Jadwal MotoGP",
+      moto2: "Jadwal Moto2",
+      moto3: "Jadwal Moto3"
+    };
+    let allData = [];
+    let selectedSeason = moment().format("YYYY");
+    let selectedClass = "motogp";
+
+    function detectUserTimezone() {
+      const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const offset = moment.tz(userTz).utcOffset();
+
+      if (offset === 420) return "Asia/Jakarta";
+      if (offset === 480) return "Asia/Makassar";
+      if (offset === 540) return "Asia/Jayapura";
+
+      return "Asia/Jakarta";
+    }
+
+    selectedTimezone = detectUserTimezone();
+    document.getElementById("timezoneSelect").value = selectedTimezone;
+
+    async function fetchMotoGPData() {
+      try {
+        const response = await fetch(apiUrls[selectedClass]);
+        allData = await response.json();
+
+        const seasons = [...new Set(allData.map(event => event.season))].sort().reverse();
+        const currentYear = moment().format("YYYY");
+
+        selectedSeason = seasons.includes(currentYear) ? currentYear : seasons[0];
+
+        updateUI();
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      }
+    }
+
+    function updateUI() {
+      document.querySelector("#panel_title span").textContent = classTitles[selectedClass];
+      const seasonData = allData.filter(event => event.season === selectedSeason);
+      displayTodaysEvent(seasonData);
+      displayAllEvents(seasonData);
+    }
+
+    function displayTodaysEvent(seasonData) {
+      // const today = moment().tz(selectedTimezone).format("YYYY-MM-DD");
+      const today = "2025-03-01";
+
+      const currentEvent = seasonData.find(event =>
+        moment(today).isBetween(moment(event.start).format("YYYY-MM-DD"), moment(event.end).format("YYYY-MM-DD"), null, "[]")
+      );
+
+      const container = document.getElementById("panel_hari_ini");
+      if (!currentEvent) {
+        container.innerHTML = `<div class="alert alert-info">No events today</div>`;
+        return;
+      }
+
+      const todaysSteps = currentEvent.steps.filter(step =>
+        moment(step.start).tz(selectedTimezone).format("YYYY-MM-DD") === today
+      );
+
+      if (todaysSteps.length === 0) {
+        container.innerHTML = `<div class="alert alert-warning">No scheduled sessions today</div>`;
+        return;
+      }
+
+      container.innerHTML = `<div class="is-flex is-justify-content-center is-align-items-center py-2">
+                                <img src="https://flagsapi.com/${currentEvent.countryCode}/flat/32.png" />
+                                <span class='ml-2'><b>${currentEvent.title}</b></span>
+                            </div>`;
+
+      let contentHTML = `<div class="content pb-3">`;
+      todaysSteps.forEach(step => {
+        contentHTML += `
+        <ul><li>
+            <strong>${step.title}</strong><br>
+            ${convertTime(step.start)} - ${convertTime(step.end)}
+        </li></ul>`;
+      });
+      contentHTML += `</div>`;
+      container.innerHTML += contentHTML;
+    }
+
+    function displayAllEvents(seasonData) {
+      const container = document.getElementById("panel_semua_jadwal");
+      container.innerHTML = seasonData.map(event => `
+        <div class="panel-block is-align-items-center">
+          <span class="panel-icon">
+        <img src="https://flagsapi.com/${event.countryCode}/flat/64.png" />
+          </span>
+          <div class="is-flex is-flex-direction-column">
+        <span><b>${event.title}</b></span>
+        <span>${convertTime(event.start)}</span>
+          </div>
+          <div class="is-flex is-flex-direction-column is-align-items-center is-justify-content-center ml-auto">
+        <span><strong>${daysUntil(event.start)}</strong></span>
+        <span>${event.index}</span>
+          </div>
+        </div>
+        <div class="panel-block-content is-hidden">
+          <div class="content">
+        <ul>
+          ${event.steps.map(step => `
+            <li>
+          <strong>${step.title}</strong><br>
+          ${convertTime(step.start)} - ${convertTime(step.end)}
+            </li>
+          `).join('')}
+        </ul>
+          </div>
+        </div>
+      `).join("");
+
+      document.querySelectorAll('.panel-block').forEach((block, index) => {
+        block.addEventListener('click', () => {
+          const content = document.querySelectorAll('.panel-block-content')[index];
+          content.classList.toggle('is-hidden');
+        });
+      });
+    }
+
+    function convertTime(time) {
+      return moment(time).tz(selectedTimezone).format("dddd, DD MMM YYYY, HH:mm");
+    }
+
+    function daysUntil(date) {
+      const count = moment(date).diff(moment(), "days");
+      return `D-${count}`;
+      // return count < 0 ? "Selesai" : `D-${count}`;
+    }
+
+    document.getElementById("timezoneSelect").addEventListener("change", (e) => {
+      selectedTimezone = e.target.value;
+      updateUI();
+    });
+
+    document.getElementById("classSelect").addEventListener("change", (e) => {
+      selectedClass = e.target.value;
+      fetchMotoGPData();
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const tabs = document.querySelectorAll(".panel-tabs a");
+      const panels = document.querySelectorAll(".panel-content");
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+          tabs.forEach(t => t.classList.remove("is-active"));
+          panels.forEach(panel => panel.classList.add("is-hidden"));
+          tab.classList.add("is-active");
+          const panelId = tab.getAttribute("data-panel");
+          document.getElementById(panelId).classList.remove("is-hidden");
+        });
+      });
+    });
+
+    fetchMotoGPData();
+  </script>
+</body>
+
+</html>
