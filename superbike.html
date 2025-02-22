@@ -21,22 +21,13 @@
 <body>
   <article class="panel is-danger mx-1 mt-1 mb-0 is-size-7-mobile" style="border: 1px solid #FF6685; --bulma-panel-shadow: none;">
     <div id="panel_title" class="panel-heading is-flex is-justify-content-space-between is-align-items-center">
-      <span>Jadwal MotoGP</span>
-      <div class="is-flex is-align-items-center">
-        <div class="select is-small mr-2">
-          <select id="classSelect">
-            <option value="motogp">MotoGP</option>
-            <option value="moto2">Moto2</option>
-            <option value="moto3">Moto3</option>
-          </select>
-        </div>
-        <div class="select is-small">
-          <select id="timezoneSelect">
-            <option value="Asia/Jakarta">WIB</option>
-            <option value="Asia/Makassar">WITA</option>
-            <option value="Asia/Jayapura">WIT</option>
-          </select>
-        </div>
+      <span>Jadwal Superbike</span>
+      <div class="select is-small is-flex is-align-items-center">
+        <select id="timezoneSelect">
+          <option value="Asia/Jakarta">WIB</option>
+          <option value="Asia/Makassar">WITA</option>
+          <option value="Asia/Jayapura">WIT</option>
+        </select>
       </div>
     </div>
     <p class="panel-tabs">
@@ -50,19 +41,9 @@
 
   <script async>
     moment.locale('id');
-    const apiUrls = {
-      motogp: "https://raw.githubusercontent.com/jscti/json_nextgp/main/motogp.json",
-      moto2: "https://raw.githubusercontent.com/jscti/json_nextgp/main/moto2.json",
-      moto3: "https://raw.githubusercontent.com/jscti/json_nextgp/main/moto3.json"
-    };
-    const classTitles = {
-      motogp: "Jadwal MotoGP",
-      moto2: "Jadwal Moto2",
-      moto3: "Jadwal Moto3"
-    };
+    const apiURL = "https://raw.githubusercontent.com/jscti/json_nextgp/main/superbike.json";
     let allData = [];
     let selectedSeason = moment().format("YYYY");
-    let selectedClass = "motogp";
 
     function detectUserTimezone() {
       const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -80,7 +61,7 @@
 
     async function fetchMotoGPData() {
       try {
-        const response = await fetch(apiUrls[selectedClass]);
+        const response = await fetch(apiURL);
         allData = await response.json();
 
         const seasons = [...new Set(allData.map(event => event.season))].sort().reverse();
@@ -95,7 +76,6 @@
     }
 
     function updateUI() {
-      document.querySelector("#panel_title span").textContent = classTitles[selectedClass];
       const seasonData = allData.filter(event => event.season === selectedSeason);
       displayTodaysEvent(seasonData);
       displayAllEvents(seasonData);
@@ -192,11 +172,6 @@
     document.getElementById("timezoneSelect").addEventListener("change", (e) => {
       selectedTimezone = e.target.value;
       updateUI();
-    });
-
-    document.getElementById("classSelect").addEventListener("change", (e) => {
-      selectedClass = e.target.value;
-      fetchMotoGPData();
     });
 
     document.addEventListener("DOMContentLoaded", () => {

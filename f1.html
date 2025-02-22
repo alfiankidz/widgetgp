@@ -91,7 +91,7 @@
 
       const container = document.getElementById("panel_hari_ini");
       if (!currentEvent) {
-        container.innerHTML = `<div class="alert alert-info">No events today</div>`;
+        container.innerHTML = `<div class="notification is-info has-text-centered m-3">No events today</div>`;
         return;
       }
 
@@ -100,7 +100,7 @@
       );
 
       if (todaysSteps.length === 0) {
-        container.innerHTML = `<div class="alert alert-warning">No scheduled sessions today</div>`;
+        container.innerHTML = `<div class="notification is-warning has-text-centered m-3">No scheduled sessions today</div>`;
         return;
       }
 
