@@ -9,13 +9,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.40/moment-timezone-with-data.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/id.min.js"></script>
+  <style>
+    @media (max-width: 768px) {
+      .is-size-7-mobile {
+        font-size: 0.75rem !important;
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <article class="panel is-danger mx-1 mt-1 mb-0" style="border: 1px solid #FF6685; --bulma-panel-shadow: none;">
-    <div id="panel_title" class="panel-heading is-flex is-justify-content-space-between">
+  <article class="panel is-danger mx-1 mt-1 mb-0 is-size-7-mobile" style="border: 1px solid #FF6685; --bulma-panel-shadow: none;">
+    <div id="panel_title" class="panel-heading is-flex is-justify-content-space-between is-align-items-center">
       <span>Jadwal F1</span>
-      <div class="select is-small">
+      <div class="select is-small is-flex is-align-items-center">
         <select id="timezoneSelect">
           <option value="Asia/Jakarta">WIB</option>
           <option value="Asia/Makassar">WITA</option>
@@ -27,8 +34,8 @@
       <a class="is-active" data-panel="panel_hari_ini">Hari Ini</a>
       <a data-panel="panel_semua_jadwal">Semua</a>
     </p>
-    <div id="panel_hari_ini" class="panel-content"></div>
-    <div id="panel_semua_jadwal" class="panel-content is-hidden"></div>
+    <div id="panel_hari_ini" class="panel-content is-size-7-mobile"></div>
+    <div id="panel_semua_jadwal" class="panel-content is-hidden is-size-7-mobile"></div>
   </article>
 
 
