@@ -14,6 +14,11 @@
       .is-size-7-mobile {
         font-size: 0.75rem !important;
       }
+
+      .flag-icon {
+        width: 24px !important;
+        height: auto !important;
+      }
     }
   </style>
 </head>
@@ -33,16 +38,20 @@
     <p class="panel-tabs">
       <a class="is-active" data-panel="panel_hari_ini">Hari Ini</a>
       <a data-panel="panel_semua_jadwal">Semua</a>
+      <a data-panel="panel_standings">Standings</a>
     </p>
     <div id="panel_hari_ini" class="panel-content is-size-7-mobile"></div>
     <div id="panel_semua_jadwal" class="panel-content is-hidden is-size-7-mobile"></div>
+    <div id="panel_standings" class="panel-content is-hidden is-size-7-mobile"></div>
   </article>
 
 
   <script async>
     moment.locale('id');
-    const apiURL = "https://raw.githubusercontent.com/jscti/json_nextgp/main/superbike.json";
-    let allData = [];
+    const apiURLEvent = "https://raw.githubusercontent.com/jscti/json_nextgp/main/superbike.json";
+    const apiURLStandings = "https://raw.githubusercontent.com/jscti/json_nextgp/refs/heads/main/standings/superbike.json";
+    let allDataEvent = [];
+    let allDataStandings = [];
     let selectedSeason = moment().format("YYYY");
 
     function detectUserTimezone() {
@@ -61,10 +70,12 @@
 
     async function fetchMotoGPData() {
       try {
-        const response = await fetch(apiURL);
-        allData = await response.json();
+        const responseEvent = await fetch(apiURLEvent);
+        const responseStandings = await fetch(apiURLStandings);
+        allDataEvent = await responseEvent.json();
+        allDataStandings = await responseStandings.json();
 
-        const seasons = [...new Set(allData.map(event => event.season))].sort().reverse();
+        const seasons = [...new Set(allDataEvent.map(event => event.season))].sort().reverse();
         const currentYear = moment().format("YYYY");
 
         selectedSeason = seasons.includes(currentYear) ? currentYear : seasons[0];
@@ -76,9 +87,92 @@
     }
 
     function updateUI() {
-      const seasonData = allData.filter(event => event.season === selectedSeason);
+      const seasonData = allDataEvent.filter(event => event.season === selectedSeason);
+      const standingsData = allDataStandings.filter(entry => entry.year.toString() === selectedSeason);
+
       displayTodaysEvent(seasonData);
       displayAllEvents(seasonData);
+      displayStandings(standingsData);
+    }
+
+    function displayStandings(standingsData) {
+      const container = document.getElementById("panel_standings");
+      if (standingsData.length === 0) {
+        container.innerHTML = `<div class="notification is-warning has-text-centered m-3">Data not available</div>`;
+        return;
+      }
+
+      const driverStandings = standingsData.find(entry => entry.type === "driver");
+      const teamStandings = standingsData.find(entry => entry.type === "team");
+
+      container.innerHTML = `
+        <div class="panel-block is-align-items-center">
+          <span class="panel-icon">
+            <i class="fas fa-user"></i>
+          </span>
+          <div class="is-flex is-flex-direction-column">
+            <span><b>Driver Standings</b></span>
+          </div>
+          <div class="is-flex is-flex-direction-column is-align-items-center is-justify-content-center ml-auto">
+            <button class="toggle-button button is-small is-light">Lihat</button>
+          </div>
+        </div>
+        <div class="panel-block-content is-hidden">
+          <div class="content m-2">
+            ${createStandingsTable(driverStandings)}
+          </div>
+        </div>
+        <div class="panel-block is-align-items-center mt-3">
+          <span class="panel-icon">
+            <i class="fas fa-users"></i>
+          </span>
+          <div class="is-flex is-flex-direction-column">
+            <span><b>Team Standings</b></span>
+          </div>
+          <div class="is-flex is-flex-direction-column is-align-items-center is-justify-content-center ml-auto">
+            <button class="toggle-button button is-small is-light">Lihat</button>
+          </div>
+        </div>
+        <div class="panel-block-content is-hidden">
+          <div class="content m-2">
+            ${createStandingsTable(teamStandings)}
+          </div>
+        </div>`;
+
+      document.querySelectorAll('.toggle-button').forEach((button, index) => {
+        button.addEventListener('click', () => {
+          const content = button.closest('.panel-block').nextElementSibling;
+          content.classList.toggle('is-hidden');
+        });
+      });
+    }
+
+    function createStandingsTable(standingsData) {
+      if (!standingsData) return `<div class="notification is-warning">Data not available</div>`;
+      return `
+        <table class="table is-fullwidth is-striped is-bordered">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Points</th>
+              <th>Wins</th>
+              <th>Podiums</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${standingsData.entries.map(entry => `
+              <tr>
+                <td>${entry.position}</td>
+                <td class="is-flex is-align-items-center">
+                  <img src="https://flagsapi.com/${entry.countryCode}/flat/16.png" class="mr-2" /> ${entry.name}
+                </td>
+                <td>${entry.points}</td>
+                <td>${entry.wins}</td>
+                <td>${entry.podiums}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
     }
 
     function displayTodaysEvent(seasonData) {
@@ -105,7 +199,7 @@
       }
 
       container.innerHTML = `<div class="is-flex is-justify-content-center is-align-items-center py-2">
-                                <img src="https://flagsapi.com/${currentEvent.countryCode}/flat/32.png" />
+                                <img src="https://flagsapi.com/${currentEvent.countryCode}/flat/32.png" class="flag-icon" />
                                 <span class='ml-2'><b>${currentEvent.title}</b></span>
                             </div>`;
 
