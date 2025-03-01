@@ -183,7 +183,10 @@
             ${standingsData.entries.map(entry => `
               <tr>
                 <td>${entry.position}</td>
-                <td>${entry.name}</td>
+                <td class="is-flex is-align-items-center">
+                  <img src="https://flagsapi.com/${entry.countryCode}/flat/16.png" class="mr-2" />
+                  ${entry.name} ${entry.parentName ? `(${entry.parentName})` : ''}
+                </td>
                 <td>${entry.points}</td>
                 <td>${entry.wins}</td>
                 <td>${entry.podiums}</td>
