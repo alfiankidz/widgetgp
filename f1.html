@@ -15,6 +15,11 @@
       .is-size-7-mobile {
         font-size: 0.75rem !important;
       }
+
+      .flag-icon {
+        width: 24px !important;
+        height: auto !important;
+      }
     }
   </style>
 </head>
@@ -106,7 +111,7 @@
       }
 
       container.innerHTML = `<div class="is-flex is-justify-content-center is-align-items-center py-2">
-                                <img src="https://flagsapi.com/${currentEvent.countryCode}/flat/32.png" />
+                                <img src="https://flagsapi.com/${currentEvent.countryCode}/flat/32.png" class="flag-icon" />
                                 <span class='ml-2'><b>${currentEvent.title}</b></span>
                             </div>`;
 
@@ -134,7 +139,7 @@
         <span>${convertTime(event.start)}</span>
           </div>
           <div class="is-flex is-flex-direction-column is-align-items-center is-justify-content-center ml-auto">
-        <span><strong>${daysUntil(event.start)}</strong></span>
+        <span><strong>${daysUntil(event)}</strong></span>
         <span>${event.index}</span>
           </div>
         </div>
@@ -165,9 +170,18 @@
     }
 
     function daysUntil(date) {
-      const count = moment(date).diff(moment(), "days");
-      return `D-${count}`;
-      // return count < 0 ? "Selesai" : `D-${count}`;
+      const today = moment().startOf('day');
+      const eventStart = moment(date.start).startOf('day');
+      const eventEnd = moment(date.end).startOf('day');
+
+      if (today.isBetween(eventStart, eventEnd, null, '[]')) {
+        return "Now";
+      } else if (today.isAfter(eventEnd)) {
+        return "Finished";
+      } else {
+        const count = eventStart.diff(today, "days");
+        return `D-${count}`;
+      }
     }
 
     document.getElementById("timezoneSelect").addEventListener("change", (e) => {
