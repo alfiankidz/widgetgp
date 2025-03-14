@@ -227,7 +227,7 @@
         <span>${convertTime(event.start)}</span>
           </div>
           <div class="is-flex is-flex-direction-column is-align-items-center is-justify-content-center ml-auto">
-        <span><strong>${daysUntil(event)}</strong></span>
+        <div>${daysUntil(event)}</div>
         <span>${event.index}</span>
           </div>
         </div>
@@ -263,12 +263,12 @@
       const eventEnd = moment(date.end).startOf('day');
 
       if (today.isBetween(eventStart, eventEnd, null, '[]')) {
-        return "Now";
+        return "<span class='has-text-success has-text-weight-bold'>Now</span>";
       } else if (today.isAfter(eventEnd)) {
-        return "Finished";
+        return "<span class='has-text-warning has-text-weight-bold'>Finished</span>";
       } else {
         const count = eventStart.diff(today, "days");
-        return `D-${count}`;
+        return `<span class='has-text-weight-bold'>D-${count}</span>`;
       }
     }
 
